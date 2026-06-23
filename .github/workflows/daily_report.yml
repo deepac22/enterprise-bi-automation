@@ -23,16 +23,13 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Decode Google credentials
+      - name: Download real loan data
         run: |
-          echo "${{ secrets.GOOGLE_CREDS_JSON }}" > google_creds.json
-        shell: bash
+          python download_real_data.py
 
       - name: Generate Excel Report
         run: |
           python generate_global_report.py
-        env:
-          SUPABASE_URI: ${{ secrets.SUPABASE_URI }}
 
       - name: Upload to Google Sheets
         run: |
