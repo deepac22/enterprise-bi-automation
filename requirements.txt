@@ -3,3 +3,4 @@ openpyxl
 gspread
 google-auth
 oauth2client
+matplotlib
