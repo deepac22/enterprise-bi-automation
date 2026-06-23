@@ -1,0 +1,55 @@
+name: Daily Lending Report
+
+on:
+  schedule:
+    - cron: '0 13 * * *'   # Runs at 9:00 AM EST (13:00 UTC)
+  workflow_dispatch:       # Allows manual trigger from GitHub UI
+
+jobs:
+  generate-and-send:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Decode Google credentials
+        run: |
+          echo "${{ secrets.GOOGLE_CREDS_JSON }}" > google_creds.json
+        shell: bash
+
+      - name: Generate Excel Report
+        run: |
+          python generate_global_report.py
+        env:
+          SUPABASE_URI: ${{ secrets.SUPABASE_URI }}
+
+      - name: Upload to Google Sheets
+        run: |
+          python upload_to_google_sheets.py
+        env:
+          SUPABASE_URI: ${{ secrets.SUPABASE_URI }}
+
+      - name: Send Email
+        run: |
+          python send_email.py
+        env:
+          SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
+          SENDER_PASSWORD: ${{ secrets.SENDER_PASSWORD }}
+          RECEIVER_EMAIL: ${{ secrets.RECEIVER_EMAIL }}
+
+      - name: Upload Excel file as artifact (optional)
+        uses: actions/upload-artifact@v4
+        with:
+          name: lending-report
+          path: reports/
